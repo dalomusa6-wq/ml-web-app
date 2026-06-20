@@ -27,11 +27,31 @@ if input_text:
         else:
             input_list.append(float(clean_item))
             
-    # 3. Pass the clean array into your model
-    np_df = np.asarray(input_list)
-    prediction = lg.predict(np_df.reshape(1, -1))
-
-    if prediction[0] == 1:
-        st.write("This Person Is Placed")
+    # 1. Split the text box inputs by comma
+    raw_list = input_text.split(',')
+    
+    # 2. Convert 'True' to 1.0, 'False' to 0.0, and strings to numeric floats
+    input_list = []
+    for item in raw_list:
+        clean_item = item.strip().lower()
+        if clean_item == 'true':
+            input_list.append(1.0)
+        elif clean_item == 'false':
+            input_list.append(0.0)
+        elif clean_item != '':  
+            input_list.append(float(clean_item))
+            
+    # 3. Safely check feature counts before predicting
+    np_df = np.asarray(input_list).reshape(1, -1)
+    
+    expected_features = lg.n_features_in_
+    actual_features = np_df.shape[1]
+    
+    if actual_features != expected_features:
+        st.error(f"Data mismatch! Your model expects **{expected_features}** inputs, but you provided **{actual_features}** inputs. Please check your comma-separated list.")
     else:
-        st.write("This Person is not Placed")
+        prediction = lg.predict(np_df)
+        if prediction[0] == 1:
+            st.success("🎉 This Person Is Placed")
+        else:
+            st.warning("⚠️ This Person is not Placed")
